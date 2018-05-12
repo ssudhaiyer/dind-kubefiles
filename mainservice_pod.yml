@@ -1,0 +1,40 @@
+apiVersion: v1 
+kind: Pod 
+metadata: 
+    name: fireflydindtest 
+spec: 
+    containers: 
+      - name: prevalservice 
+        image: ssudhaiyer/firefly:latest
+        env: 
+          - name: DOCKER_HOST 
+            value: tcp://localhost:2375 
+        command:
+         - "sh"
+        args:
+         - '/tmp/build.sh'
+        volumeMounts:
+          - name: docker-build-dir 
+            mountPath: /builds 
+          - name: git-secret 
+            mountPath: /etc/git-secret 
+      - name: dind-daemon 
+        image: docker:dind 
+        securityContext: 
+            privileged: true 
+        volumeMounts: 
+          - name: docker-graph-storage 
+            mountPath: /var/lib/docker 
+          - name: docker-build-dir 
+            mountPath: /builds 
+          - name: git-secret 
+            mountPath: /etc/git-secret 
+    volumes: 
+      - name: docker-graph-storage 
+        emptyDir: {}
+      - name: docker-build-dir 
+        emptyDir: {}
+      - name: git-secret
+        secret:
+         secretName: git-creds
+         defaultMode: 256
